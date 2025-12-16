@@ -49,6 +49,17 @@
             tools:text="Acción · 2025" />
 
             <Button
+                android:id="@+id/btnTrailer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Trailer"
+                android:textColor="@color/colorTextoPrincipal"
+                android:backgroundTint="@color/colorBotonNeutro"
+                android:drawableLeft="@android:drawable/ic_media_play"
+                android:padding="12dp" />
+
+            <Button
                 android:id="@+id/btnFavorito"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
