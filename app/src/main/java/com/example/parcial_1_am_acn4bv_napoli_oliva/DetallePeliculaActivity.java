@@ -1,7 +1,10 @@
 package com.example.parcial_1_am_acn4bv_napoli_oliva;
 
+import android.content.Intent; // Importante
+import android.net.Uri;       // Importante
 import android.content.res.ColorStateList;
 import android.os.Bundle;
+import android.view.View;     // Importante
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -26,17 +29,18 @@ public class DetallePeliculaActivity extends AppCompatActivity {
     private EditText inputCantidadEntradas;
     private TextView txtCostoTotal;
     private Button btnConfirmarReserva;
+    private Button btnTrailer;
     private Pelicula peliculaActual;
     private FirebaseAuth mAuth;
     private String currentUserId;
     private String favoriteDocId = null;
+    private android.widget.RatingBar ratingBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detalle_pelicula);
 
-        // favoritos
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser user = mAuth.getCurrentUser();
 
@@ -47,52 +51,68 @@ public class DetallePeliculaActivity extends AppCompatActivity {
         }
         currentUserId = user.getUid();
 
-        // variables
         TextView txtTitulo = findViewById(R.id.detalleTitulo);
         TextView txtDatos = findViewById(R.id.detalleDatos);
         TextView txtDescripcion = findViewById(R.id.detalleDescripcion);
         ImageView imgPoster = findViewById(R.id.detalleImagen);
         Button btnVolver = findViewById(R.id.btnVolver);
         Button btnFavorito = findViewById(R.id.btnFavorito);
+
+        //estrellas review
+        ratingBar = findViewById(R.id.ratingBar);
+        ratingBar.setOnRatingBarChangeListener((ratingBar, rating, fromUser) -> {
+            if (fromUser) {
+                Toast.makeText(DetallePeliculaActivity.this,
+                        "Tu calificacion fue de: " + rating + " estrellas",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // btn trailer
+        btnTrailer = findViewById(R.id.btnTrailer);
+
         peliculaActual = (Pelicula) getIntent().getSerializableExtra("PELICULA_SELECCIONADA");
 
         if (peliculaActual != null) {
 
             txtTitulo.setText(peliculaActual.getTitulo());
             txtDatos.setText(peliculaActual.getGenero() + " (" + peliculaActual.getAnio() + ")");
-
-            Glide.with(this)
-                    .load(peliculaActual.getUrlImagen())
-                    .into(imgPoster);
-
-            // urlDescripcion de Firebase
             txtDescripcion.setText(peliculaActual.getUrlDescripcion());
+
+            Glide.with(this).load(peliculaActual.getUrlImagen()).into(imgPoster);
 
             btnVolver.setOnClickListener(v -> finish());
 
-            // validar si la pelicula ya es favorita
             checkIfFavoriteAndSetButton();
+            btnFavorito.setOnClickListener(v -> toggleFavoriteStatus());
 
-            btnFavorito.setOnClickListener(v -> {
-                toggleFavoriteStatus();
-            });
+            // nueva verificacion de urlTrailer en FB
+            if (peliculaActual.getUrlTrailer() != null && !peliculaActual.getUrlTrailer().isEmpty()) {
+                btnTrailer.setVisibility(View.VISIBLE);
+                btnTrailer.setOnClickListener(v -> {
+                    try {
+                        Uri uri = Uri.parse(peliculaActual.getUrlTrailer());
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        Toast.makeText(DetallePeliculaActivity.this, "No se pudo abrir el enlace.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } else {
+                btnTrailer.setVisibility(View.GONE);
+            }
 
             // Reservar entradas
             inputCantidadEntradas = findViewById(R.id.inputCantidadEntradas);
             txtCostoTotal = findViewById(R.id.txtCostoTotal);
             btnConfirmarReserva = findViewById(R.id.btnConfirmarReserva);
 
-            // calculo de entrada, por defecto 1
             calcularCostoTotal(1);
 
-            // listener para el calculo dinamico
             inputCantidadEntradas.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void afterTextChanged(Editable s) { }
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                @Override public void afterTextChanged(Editable s) { }
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                     String strCantidad = s.toString();
                     int cantidad = strCantidad.isEmpty() ? 0 : Integer.parseInt(strCantidad);
                     calcularCostoTotal(cantidad);
@@ -101,7 +121,6 @@ public class DetallePeliculaActivity extends AppCompatActivity {
             btnConfirmarReserva.setOnClickListener(v -> confirmarReserva());
 
         } else {
-            // si la pelicula es nula, se cierra
             Toast.makeText(this, "Error: No se pudo cargar la información de la película.", Toast.LENGTH_LONG).show();
             finish();
         }
@@ -112,73 +131,51 @@ public class DetallePeliculaActivity extends AppCompatActivity {
         btnFavorito.setText("Guardando...");
 
         Map<String, Object> data = new HashMap<>();
-
-        // camapos de la pelicula
         data.put("id", p.getId());
         data.put("titulo", p.getTitulo());
         data.put("genero", p.getGenero());
         data.put("anio", p.getAnio());
         data.put("urlImagen", p.getUrlImagen());
         data.put("urlDescripcion", p.getUrlDescripcion());
-
-        // campo para validar
+        data.put("urlTrailer", p.getUrlTrailer());
         data.put("userId", currentUserId);
 
         db.collection("favoritos")
-                .add(data) // Se guarda el mapa con todos los datos y el userId
+                .add(data)
                 .addOnSuccessListener(documentReference -> {
                     Toast.makeText(this, "¡Agregado a Favoritos!", Toast.LENGTH_SHORT).show();
-                    checkIfFavoriteAndSetButton(); // Recarga el estado (botón QUITAR)
+                    checkIfFavoriteAndSetButton();
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Error al guardar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     btnFavorito.setEnabled(true);
                 });
     }
-
-    // calcular valor total de la reserva
     private void calcularCostoTotal (int cantidad){
-        if (cantidad < 0 || cantidad > 99){
-            cantidad = 0;
-        }
-
+        if (cantidad < 0 || cantidad > 99) cantidad = 0;
         double costoTotal = cantidad * PRECIO_ENTRADA;
-
-        // formato de la moneda
         NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "AR"));
-        String costoFormateado = currencyFormat.format(costoTotal);
-
-        txtCostoTotal.setText("Costo Total: " + costoFormateado);
+        txtCostoTotal.setText("Costo Total: " + currencyFormat.format(costoTotal));
     }
 
     private void confirmarReserva (){
         String strCantidad = inputCantidadEntradas.getText().toString();
         int cantidad = strCantidad.isEmpty() ? 0 : Integer.parseInt(strCantidad);
-
         if (cantidad <= 0) {
             Toast.makeText(this, "Selecciona al menos una entrada.", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        // costo total del TextView
         String costoTotal = txtCostoTotal.getText().toString().replace("Costo Total: ", "");
-
         String mensaje = "¡Reserva confirmada! Película: '" + peliculaActual.getTitulo() + "' (" + cantidad + " entradas). Total a pagar: " + costoTotal;
-
         Toast.makeText(this, mensaje, Toast.LENGTH_LONG).show();
     }
 
-    // Validar si es favorito o no
     private void checkIfFavoriteAndSetButton (){
         if (currentUserId == null || peliculaActual == null) return;
-
         Button btnFavorito = findViewById(R.id.btnFavorito);
         btnFavorito.setText("Verificando...");
         btnFavorito.setEnabled(false);
-
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-        // consulta si el id del usuario y el de la pelicula coincidan
         db.collection("favoritos")
                 .whereEqualTo("id", peliculaActual.getId())
                 .whereEqualTo("userId", currentUserId)
@@ -186,33 +183,24 @@ public class DetallePeliculaActivity extends AppCompatActivity {
                 .addOnCompleteListener(task -> {
                     btnFavorito.setEnabled(true);
                     if (task.isSuccessful() && !task.getResult().isEmpty()){
-                        // Si la consulta esta ok y esta en favoritos
                         favoriteDocId = task.getResult().getDocuments().get(0).getId();
                         btnFavorito.setText("QUITAR de Favoritos");
-                        int colorInteractivo = ContextCompat.getColor(this, R.color.colorInteractivo);
-                        btnFavorito.setBackgroundTintList(ColorStateList.valueOf(colorInteractivo));
+                        btnFavorito.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.colorInteractivo)));
                     } else {
-                        // no es favorito
                         favoriteDocId = null;
                         btnFavorito.setText("AGREGAR a Favoritos");
-                        int colorAcento = ContextCompat.getColor(this, R.color.colorAcento);
-                        btnFavorito.setBackgroundTintList(ColorStateList.valueOf(colorAcento));
+                        btnFavorito.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.colorAcento)));
                     }
                 });
     }
 
-    // Modificar estado de agregar o quitar de favoritos
     private void toggleFavoriteStatus (){
         if (currentUserId == null || peliculaActual == null) return;
-
         Button btnFavorito = findViewById(R.id.btnFavorito);
         btnFavorito.setEnabled(false);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-
         if (favoriteDocId != null){
-            // la pelicula es favorita
-            db.collection("favoritos").document(favoriteDocId)
-                    .delete()
+            db.collection("favoritos").document(favoriteDocId).delete()
                     .addOnSuccessListener(aVoid -> {
                         Toast.makeText(this, "Eliminado de favoritos.", Toast.LENGTH_SHORT).show();
                         checkIfFavoriteAndSetButton();
@@ -222,7 +210,6 @@ public class DetallePeliculaActivity extends AppCompatActivity {
                         btnFavorito.setEnabled(true);
                     });
         } else {
-            // no es favorita
             guardarEnFirebase(db, peliculaActual);
         }
     }

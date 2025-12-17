@@ -8,36 +8,31 @@ public class Pelicula implements Serializable {
     private String genero;
     private String urlImagen;
     private String urlDescripcion;
-    private String userId; // usado para favoritos
+    private String urlTrailer;
+    private String userId;
 
-    public Pelicula(int id, String titulo, int anio, String genero, String urlImagen, String urlDescripcion){
+    public Pelicula(int id, String titulo, int anio, String genero, String urlImagen, String urlDescripcion, String urlTrailer){
         this.id = id;
         this.titulo = titulo;
         this.anio = anio;
         this.genero = genero;
         this.urlImagen = urlImagen;
         this.urlDescripcion = urlDescripcion;
+        this.urlTrailer = urlTrailer;
     }
 
-    // constructor vacio para firebase
+    // Constructor vacío para Firebase
     public Pelicula (){ }
 
     // GETTERS
     public int getId (){ return id; }
     public String getTitulo(){ return titulo; }
-    public int getAnio(){
-        return anio;
-    }
-    public String getGenero(){
-        return genero;
-    }
-    public String getUrlImagen(){
-        return urlImagen;
-    }
-    public String getUrlDescripcion() {
-        return urlDescripcion;
-    }
+    public int getAnio(){ return anio; }
+    public String getGenero(){ return genero; }
+    public String getUrlImagen(){ return urlImagen; }
+    public String getUrlDescripcion() { return urlDescripcion; }
     public String getUserId() { return userId; }
+    public String getUrlTrailer() { return urlTrailer; }
 
     // SETTERS
     public void setId(int id) { this.id = id; }
@@ -47,4 +42,5 @@ public class Pelicula implements Serializable {
     public void setUrlImagen(String urlImagen) { this.urlImagen = urlImagen; }
     public void setUrlDescripcion(String urlDescripcion) { this.urlDescripcion = urlDescripcion; }
     public void setUserId(String userId) { this.userId = userId; }
+    public void setUrlTrailer(String urlTrailer) { this.urlTrailer = urlTrailer; }
 }

@@ -1,10 +1,10 @@
 package com.example.parcial_1_am_acn4bv_napoli_oliva;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private Button btnIrFavoritos;
     private Button btnCerrarSesion;
+    private Button btnUbicacion;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,9 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Se inicia con Firebase Auth
         mAuth = FirebaseAuth.getInstance();
-        // comprobar autenticación antes de cargar aalgo
         checkAuthentication();
-
     }
 
     private void checkAuthentication() {
@@ -60,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
             inputBusqueda = findViewById(R.id.inputBusqueda);
             btnIrFavoritos = findViewById(R.id.btnIrFavoritos);
             btnCerrarSesion = findViewById(R.id.btnCerrarSesion);
+            btnUbicacion = findViewById(R.id.btnUbicacion);
 
             peliculas = new ArrayList<>();
 
@@ -70,6 +70,20 @@ public class MainActivity extends AppCompatActivity {
             });
 
             btnCerrarSesion.setOnClickListener(v -> logoutUser());
+
+            btnUbicacion.setOnClickListener(v -> {
+                Uri gmmIntentUri = Uri.parse("geo:0,0?q=Cine+Boedo+Buenos+Aires");
+                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                mapIntent.setPackage("com.google.android.apps.maps");
+
+                if (mapIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(mapIntent);
+                } else {
+                    //si  el usuario no tiene maps entra a este bloque y lo redirige con internet
+                    startActivity(new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://www.google.com/maps/search/?api=1&query=Cine+Boedo+Buenos+Aires")));
+                }
+            });
 
             // filtro de busqueda
             inputBusqueda.addTextChangedListener(new TextWatcher() {
@@ -163,5 +177,4 @@ public class MainActivity extends AppCompatActivity {
             mostrarPeliculas(filtradas);
         }
     }
-
 }

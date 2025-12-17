@@ -12,4 +12,5 @@
     <color name="colorAcento">#E50914</color>
     <color name="colorBotonNeutro">#333333</color>
     <color name="colorInteractivo">#00ACC1</color>
+    <color name="colorEstrellas">#FFC107</color>
 </resources>

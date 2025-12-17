@@ -48,6 +48,29 @@
             android:layout_marginTop="4dp"
             tools:text="Acción · 2025" />
 
+            <RatingBar
+                android:id="@+id/ratingBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:numStars="5"
+                android:stepSize="1.0"
+                android:theme="@style/Widget.AppCompat.RatingBar"
+                android:progressTint="@color/colorEstrellas"
+                />
+
+            <Button
+                android:id="@+id/btnTrailer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Ver trailer"
+                android:textColor="@color/colorTextoPrincipal"
+                android:backgroundTint="@color/colorBotonNeutro"
+                android:drawableLeft="@android:drawable/ic_media_play"
+                android:padding="12dp" />
+
             <Button
                 android:id="@+id/btnFavorito"
                 android:layout_width="match_parent"
